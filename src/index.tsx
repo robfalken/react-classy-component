@@ -1,9 +1,25 @@
 import React, { forwardRef } from "react";
-import { domAttributes } from "./domAttributes";
 
 type FnExpression = (...args: any[]) => string;
 type ObjExpression = { [key: string]: string };
 type Expression = FnExpression | ObjExpression;
+
+export type RccOptions = {
+  /**
+   * Called for every prop to decide whether it should be forwarded to the
+   * underlying DOM element. Return false to prevent forwarding.
+   *
+   * Props that appear as keys in an object expression are always stripped
+   * automatically — you only need this for props introduced via function
+   * expressions.
+   *
+   * @example
+   * const Button = rcc<{ variant?: string }>("button", {
+   *   shouldForwardProp: (prop) => prop !== "variant",
+   * })`${({ variant }) => variant === "primary" ? "bg-blue-500" : ""}`;
+   */
+  shouldForwardProp?: (prop: string) => boolean;
+};
 
 type RccComponent<T, Ref extends Element = Element> =
   React.ForwardRefExoticComponent<
@@ -20,26 +36,27 @@ type HtmlTag = any;
 const sanitizeString = (str: string) => str.trim();
 const removeEmptyStrings = (str: string) => !!str;
 
-// Remove any props not included in `domAttributes`
-// before rendering the HTML element
-const cleanProps = (props: any) =>
-  Object.keys(props).reduce(
-    (acc, val) =>
-      domAttributes.includes(val) ||
-      val.startsWith("aria-") ||
-      val.startsWith("data-")
-        ? { ...acc, [val]: props[val] }
-        : acc,
-    {}
-  );
-
 export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
-  Tag: HtmlTag
+  Tag: HtmlTag,
+  options?: RccOptions
 ): Args<T, Ref> {
   return function l2({ raw }, ...expressions: Expression[]) {
+    // Collect object-expression keys once at definition time.
+    // These are always stripped — they are variant flags, not HTML attributes.
+    const customPropKeys = new Set(
+      expressions
+        .filter((e): e is ObjExpression => typeof e !== "function")
+        .flatMap((e) => Object.keys(e))
+    );
+
+    const shouldForward = (key: string): boolean => {
+      if (customPropKeys.has(key)) return false;
+      if (options?.shouldForwardProp) return options.shouldForwardProp(key);
+      return true;
+    };
+
     const component = forwardRef<Ref, React.HTMLProps<{}>>(
       ({ children, className = "", ...props }, ref) => {
-        // Expressions can be either an object or a function
         const handleExpression = (expression: Expression) => {
           if (typeof expression === "function") {
             return expression(props);
@@ -59,8 +76,14 @@ export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
           .filter(removeEmptyStrings)
           .join(" ");
 
+        const forwardedProps = Object.keys(props).reduce<Record<string, unknown>>(
+          (acc, key) =>
+            shouldForward(key) ? { ...acc, [key]: (props as any)[key] } : acc,
+          {}
+        );
+
         return (
-          <Tag ref={ref} className={classes} {...cleanProps(props)}>
+          <Tag ref={ref} className={classes} {...forwardedProps}>
             {children}
           </Tag>
         );

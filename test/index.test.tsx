@@ -162,10 +162,24 @@ describe("rcc", () => {
       expect(container.firstChild).toHaveAttribute("data-value", "42");
     });
 
-    it("still strips unknown custom props", () => {
-      const Span = rcc<{ primary?: boolean } & React.HTMLAttributes<HTMLElement>>("span")``;
+    it("strips object-expression keys from the DOM automatically", () => {
+      const Span = rcc<
+        { primary?: boolean } & React.HTMLAttributes<HTMLElement>
+      >("span")`${{ primary: "primary-class" }}`;
       const { container } = render(<Span primary />);
+      expect(container.firstChild).toHaveClass("primary-class");
       expect(container.firstChild).not.toHaveAttribute("primary");
+    });
+
+    it("strips props blocked by shouldForwardProp", () => {
+      const Span = rcc<
+        { variant?: string } & React.HTMLAttributes<HTMLElement>
+      >("span", { shouldForwardProp: (prop) => prop !== "variant" })`
+        ${({ variant }) => (variant === "primary" ? "primary-class" : "")}
+      `;
+      const { container } = render(<Span variant="primary" />);
+      expect(container.firstChild).toHaveClass("primary-class");
+      expect(container.firstChild).not.toHaveAttribute("variant");
     });
   });
 
