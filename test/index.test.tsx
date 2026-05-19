@@ -130,6 +130,23 @@ describe("rcc", () => {
     });
   });
 
+  describe("ref forwarding", () => {
+    it("forwards ref to the underlying DOM element", () => {
+      const Span = rcc("span")``;
+      const ref = React.createRef<Element>();
+      render(<Span ref={ref} />);
+      expect(ref.current).not.toBeNull();
+      expect(ref.current?.tagName).toBe("SPAN");
+    });
+
+    it("forwards ref with typed shortcut", () => {
+      const Button = rcc.button``;
+      const ref = React.createRef<HTMLButtonElement>();
+      render(<Button ref={ref} />);
+      expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+    });
+  });
+
   describe("aria and data attributes", () => {
     it("passes through aria-* attributes", () => {
       const Span = rcc("span")``;
