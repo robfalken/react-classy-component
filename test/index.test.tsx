@@ -130,6 +130,28 @@ describe("rcc", () => {
     });
   });
 
+  describe("aria and data attributes", () => {
+    it("passes through aria-* attributes", () => {
+      const Span = rcc("span")``;
+      const { container } = render(<Span aria-label="close" aria-hidden={true} />);
+      expect(container.firstChild).toHaveAttribute("aria-label", "close");
+      expect(container.firstChild).toHaveAttribute("aria-hidden", "true");
+    });
+
+    it("passes through data-* attributes", () => {
+      const Span = rcc("span")``;
+      const { container } = render(<Span data-testid="my-span" data-value="42" />);
+      expect(container.firstChild).toHaveAttribute("data-testid", "my-span");
+      expect(container.firstChild).toHaveAttribute("data-value", "42");
+    });
+
+    it("still strips unknown custom props", () => {
+      const Span = rcc<{ primary?: boolean } & React.HTMLAttributes<HTMLElement>>("span")``;
+      const { container } = render(<Span primary />);
+      expect(container.firstChild).not.toHaveAttribute("primary");
+    });
+  });
+
   describe("button", () => {
     it("accepts type attribute", () => {
       const Button = rcc.button``;

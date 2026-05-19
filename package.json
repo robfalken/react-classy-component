@@ -1,22 +1,33 @@
 {
+  "name": "react-classy-component",
   "version": "0.2.0",
   "license": "MIT",
+  "author": "Robert Falkén",
+  "packageManager": "pnpm@10.0.0",
   "main": "dist/index.js",
-  "typings": "dist/index.d.ts",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "dist",
     "src"
   ],
   "engines": {
-    "node": ">=10"
+    "node": ">=18"
   },
   "scripts": {
-    "start": "tsdx watch",
-    "build": "tsdx build",
-    "test": "tsdx test --passWithNoTests",
-    "test:watch": "tsdx test --passWithNoTests --watchAll",
-    "lint": "tsdx lint",
-    "prepare": "tsdx build",
+    "start": "tsup --watch",
+    "build": "tsup",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "prepare": "tsup",
     "size": "size-limit",
     "analyze": "size-limit --why",
     "storybook": "start-storybook -p 6006",
@@ -27,28 +38,24 @@
   },
   "husky": {
     "hooks": {
-      "pre-commit": "tsdx lint"
+      "pre-commit": "pnpm lint"
     }
   },
   "prettier": {
     "printWidth": 80,
     "trailingComma": "es5"
   },
-  "name": "react-classy-component",
-  "author": "Robert Falkén",
-  "module": "dist/react-classy-component.esm.js",
   "size-limit": [
     {
-      "path": "dist/react-classy-component.cjs.production.min.js",
+      "path": "dist/index.js",
       "limit": "10 KB"
     },
     {
-      "path": "dist/react-classy-component.esm.js",
+      "path": "dist/index.mjs",
       "limit": "10 KB"
     }
   ],
   "devDependencies": {
-    "@babel/core": "^7.14.6",
     "@size-limit/preset-small-lib": "^4.12.0",
     "@storybook/addon-essentials": "^6.2.9",
     "@storybook/addon-info": "^5.3.21",
@@ -59,14 +66,17 @@
     "@testing-library/react": "^11.2.7",
     "@types/react": "^17.0.11",
     "@types/react-dom": "^17.0.7",
+    "@vitejs/plugin-react": "^4.0.0",
     "babel-loader": "^8.2.2",
     "husky": "^6.0.0",
+    "jsdom": "^24.0.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-is": "^17.0.2",
     "size-limit": "^4.12.0",
-    "tsdx": "^0.14.1",
     "tslib": "^2.3.0",
-    "typescript": "^4.3.2"
+    "tsup": "^8.0.0",
+    "typescript": "^4.3.2",
+    "vitest": "^2.0.0"
   }
 }

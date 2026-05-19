@@ -20,7 +20,11 @@ const removeEmptyStrings = (str: string) => !!str;
 const cleanProps = (props: any) =>
   Object.keys(props).reduce(
     (acc, val) =>
-      domAttributes.includes(val) ? { ...acc, [val]: props[val] } : acc,
+      domAttributes.includes(val) ||
+      val.startsWith("aria-") ||
+      val.startsWith("data-")
+        ? { ...acc, [val]: props[val] }
+        : acc,
     {}
   );
 

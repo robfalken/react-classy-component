@@ -4,14 +4,19 @@ A library to make it more convenient to create properly typed React components u
 
 ## Install
 
-### yarn
+### pnpm
 ```bash
-yarn add react-classy-component
+pnpm add react-classy-component
 ```
 
 ### npm
 ```bash
 npm install react-classy-component
+```
+
+### yarn
+```bash
+yarn add react-classy-component
 ```
 
 ## Usage
