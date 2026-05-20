@@ -1,5 +1,5 @@
 import React from "react";
-import { Meta, Story } from "@storybook/react";
+import type { Meta, StoryObj } from "@storybook/react";
 import { rcc } from "../src";
 
 interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -8,7 +8,8 @@ interface Props extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const Button: React.FC<Props> = rcc<Props>("button")`red-text ${({ blue }) =>
   blue ? "blue-text-important" : ""} dashed-border ${({ yellow }) =>
-  yellow ? "yellow-background" : ""}`;
+  yellow ? "yellow-background" : ""}`.withDefaults({ type: "button" });
+
 
 const ShortcutButton = rcc.button<{ yellow: boolean }>`red-text ${({ blue }) =>
   blue ? "blue-text-important" : ""} dashed-border ${({ yellow }) =>
@@ -18,14 +19,12 @@ const Input = rcc.input<{}>`dashed-border`;
 
 const Div = rcc.div<{}>`margin`;
 
-const meta: Meta = {
+const meta: Meta<typeof Button> = {
   title: "Button",
   component: Button,
   argTypes: {
     children: {
-      control: {
-        type: "text",
-      },
+      control: { type: "text" },
     },
   },
   parameters: {
@@ -35,26 +34,20 @@ const meta: Meta = {
 
 export default meta;
 
-const Template: Story<Props> = () => (
-  <div>
-    {/*
-    <Button type="button">Button</Button>
-    <Button2 type="button">Button 2</Button2>
-      */}
-    <Button type="button" yellow>
-      Button
-    </Button>
-    <Div>
-      <ShortcutButton type="button" yellow>
-        ShortcutButton
-      </ShortcutButton>
-    </Div>
-    <Input placeholder="An input" />
-  </div>
-);
+type Story = StoryObj<typeof Button>;
 
-// By passing using the Args format for exported stories, you can control the props for a component for reuse in a test
-// https://storybook.js.org/docs/react/workflows/unit-testing
-export const Default = Template.bind({});
-
-Default.args = {};
+export const Default: Story = {
+  render: () => (
+    <div>
+      <Button yellow>
+        Button
+      </Button>
+      <Div>
+        <ShortcutButton type="submit" yellow>
+          ShortcutButton
+        </ShortcutButton>
+      </Div>
+      <Input placeholder="An input" />
+    </div>
+  ),
+};
