@@ -21,10 +21,20 @@ export type RccOptions = {
   shouldForwardProp?: (prop: string) => boolean;
 };
 
-type RccComponent<T, Ref extends Element = Element> =
+export type RccComponent<T, Ref extends Element = Element> =
   React.ForwardRefExoticComponent<
     React.PropsWithoutRef<T> & React.RefAttributes<Ref>
-  >;
+  > & {
+    /**
+     * Returns a new component with the given props applied as defaults.
+     * Explicitly supplied props always take precedence over defaults.
+     * Can be chained.
+     *
+     * @example
+     * const Button = rcc.button`p-1 rounded`.withDefaults({ type: "button" });
+     */
+    withDefaults(defaults: Partial<React.PropsWithoutRef<T>>): RccComponent<T, Ref>;
+  };
 
 type Args<T, Ref extends Element = Element> = (
   args: { raw: readonly string[] },
@@ -101,7 +111,22 @@ export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
       }
     );
 
-    return component as unknown as RccComponent<T, Ref>;
+    const attachWithDefaults = (
+      base: React.ForwardRefExoticComponent<any>
+    ): RccComponent<T, Ref> =>
+      Object.assign(base, {
+        withDefaults(
+          defaults: Partial<React.PropsWithoutRef<T>>
+        ): RccComponent<T, Ref> {
+          return attachWithDefaults(
+            forwardRef<Ref, React.HTMLProps<{}>>((props, ref) =>
+              React.createElement(base, { ...defaults, ...props, ref })
+            )
+          );
+        },
+      }) as unknown as RccComponent<T, Ref>;
+
+    return attachWithDefaults(component);
   };
 }
 

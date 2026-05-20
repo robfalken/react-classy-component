@@ -130,6 +130,34 @@ describe("rcc", () => {
     });
   });
 
+  describe("withDefaults", () => {
+    it("applies default props", () => {
+      const Button = rcc.button``.withDefaults({ type: "submit" });
+      const { container } = render(<Button />);
+      expect(container.firstChild).toHaveAttribute("type", "submit");
+    });
+
+    it("explicit props override defaults", () => {
+      const Button = rcc.button``.withDefaults({ type: "submit" });
+      const { container } = render(<Button type="button" />);
+      expect(container.firstChild).toHaveAttribute("type", "button");
+    });
+
+    it("can be chained", () => {
+      const A = rcc.a``.withDefaults({ target: "_blank" }).withDefaults({ rel: "noreferrer" });
+      const { container } = render(<A href="/path" />);
+      expect(container.firstChild).toHaveAttribute("target", "_blank");
+      expect(container.firstChild).toHaveAttribute("rel", "noreferrer");
+    });
+
+    it("forwards ref through withDefaults", () => {
+      const Button = rcc.button``.withDefaults({ type: "button" });
+      const ref = React.createRef<HTMLButtonElement>();
+      render(<Button ref={ref} />);
+      expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+    });
+  });
+
   describe("void elements", () => {
     it("renders img without children", () => {
       const Img = rcc.img`my-class`;
