@@ -281,3 +281,31 @@ rcc.section = function <T>(
     ...expressions
   );
 };
+
+/**
+ * Wrap an existing component to extend it with extra classes. The wrapped
+ * component must accept a `className` prop and (to support refs) forward refs
+ * to a DOM element. The resulting component carries the same prop types as the
+ * underlying component, so it can be used like a native HTML element.
+ *
+ * @example
+ * const Fancy = rcc.as(BaseComponent)`text-white p-2 rounded`;
+ * <Fancy onClick={...} />
+ */
+rcc.as = function <C extends React.ElementType>(
+  Component: C,
+  options?: RccOptions
+) {
+  return function <T = {}>(
+    args: { raw: readonly string[] },
+    ...expressions: Expression[]
+  ) {
+    type Ref = React.ElementRef<C> extends Element
+      ? React.ElementRef<C>
+      : Element;
+    return rcc<React.ComponentPropsWithoutRef<C> & T, Ref>(
+      Component as HtmlTag,
+      options
+    )(args, ...expressions);
+  };
+};

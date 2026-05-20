@@ -109,6 +109,27 @@ Now `bg-blue-500` will only be rendered if the `primary` prop is truthy. And, yo
 <button class="text-white p-2 rounded bg-red-500">I am dangerous!</button>
 ```
 
+### Wrapping an existing component
+
+Use `rcc.as` to extend an existing component with extra classes. The wrapped component must accept a `className` prop (and forward refs to a DOM element if you want to use `ref`). The resulting component inherits the underlying component's prop types, so it can be used just like a native HTML element.
+
+```tsx
+const Fancy = rcc.as(BaseComponent)`text-white p-2 rounded`;
+
+<Fancy onClick={...} />
+```
+
+You can pass custom props and options just like with `rcc()`:
+
+```tsx
+const Fancy = rcc.as<typeof BaseComponent, { primary?: boolean }>(
+  BaseComponent
+)`
+text-white p-2 rounded
+${{ primary: "bg-blue-500" }}
+`;
+```
+
 ### Advanced conditions
 
 For more complex logic you can pass a function instead. The function receives the component's props and must return a string of classes.

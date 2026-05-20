@@ -275,4 +275,72 @@ describe("rcc", () => {
       expect(container.firstChild).toHaveAttribute("multiple");
     });
   });
+
+  describe("as", () => {
+    const Base = React.forwardRef<
+      HTMLButtonElement,
+      React.ButtonHTMLAttributes<HTMLButtonElement>
+    >(({ className, children, ...props }, ref) => (
+      <button ref={ref} className={`base-class ${className ?? ""}`} {...props}>
+        {children}
+      </button>
+    ));
+
+    it("applies classes to the wrapped component", () => {
+      const Wrapped = rcc.as(Base)`extra-class`;
+      const { container } = render(<Wrapped />);
+      expect(container.firstChild).toHaveClass("base-class");
+      expect(container.firstChild).toHaveClass("extra-class");
+    });
+
+    it("merges user-supplied className", () => {
+      const Wrapped = rcc.as(Base)`extra-class`;
+      const { container } = render(<Wrapped className="user-class" />);
+      expect(container.firstChild).toHaveClass("base-class");
+      expect(container.firstChild).toHaveClass("extra-class");
+      expect(container.firstChild).toHaveClass("user-class");
+    });
+
+    it("forwards props to the wrapped component", () => {
+      const Wrapped = rcc.as(Base)`extra-class`;
+      const { container } = render(
+        <Wrapped type="submit" aria-label="go" data-testid="x" />
+      );
+      expect(container.firstChild).toHaveAttribute("type", "submit");
+      expect(container.firstChild).toHaveAttribute("aria-label", "go");
+      expect(container.firstChild).toHaveAttribute("data-testid", "x");
+    });
+
+    it("forwards ref through the wrapped component", () => {
+      const Wrapped = rcc.as(Base)`extra-class`;
+      const ref = React.createRef<HTMLButtonElement>();
+      render(<Wrapped ref={ref} />);
+      expect(ref.current).toBeInstanceOf(HTMLButtonElement);
+    });
+
+    it("supports object expressions and strips their keys", () => {
+      const Wrapped = rcc.as<typeof Base, { primary?: boolean }>(
+        Base
+      )`${{ primary: "primary-class" }}`;
+      const { container } = render(<Wrapped primary />);
+      expect(container.firstChild).toHaveClass("primary-class");
+      expect(container.firstChild).not.toHaveAttribute("primary");
+    });
+
+    it("supports function expressions", () => {
+      const Wrapped = rcc.as<typeof Base, { variant?: string }>(Base, {
+        shouldForwardProp: (prop) => prop !== "variant",
+      })`${({ variant }) => (variant === "primary" ? "primary-class" : "")}`;
+      const { container } = render(<Wrapped variant="primary" />);
+      expect(container.firstChild).toHaveClass("primary-class");
+      expect(container.firstChild).not.toHaveAttribute("variant");
+    });
+
+    it("works with intrinsic element strings too", () => {
+      const Wrapped = rcc.as("section")`section-class`;
+      const { container } = render(<Wrapped />);
+      expect(container.firstChild?.nodeName).toBe("SECTION");
+      expect(container.firstChild).toHaveClass("section-class");
+    });
+  });
 });
