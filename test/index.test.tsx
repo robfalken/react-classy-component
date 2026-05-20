@@ -44,6 +44,19 @@ describe("rcc", () => {
       expect(container.firstChild).toHaveClass("oui-class");
       expect(container.firstChild).not.toHaveClass("no-class");
     });
+
+    it("applies negated object-expression keys when the prop is falsy", () => {
+      const Span = rcc<
+        { negative?: boolean } & React.HTMLAttributes<HTMLElement>
+      >("span")`${{ "!negative": "not-negative-class" }}`;
+      const off = render(<Span />);
+      expect(off.container.firstChild).toHaveClass("not-negative-class");
+      expect(off.container.firstChild).not.toHaveAttribute("negative");
+
+      const on = render(<Span negative />);
+      expect(on.container.firstChild).not.toHaveClass("not-negative-class");
+      expect(on.container.firstChild).not.toHaveAttribute("negative");
+    });
   });
 
   describe("generic elements", () => {

@@ -62,10 +62,15 @@ export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
   return function l2({ raw }, ...expressions: Expression[]) {
     // Collect object-expression keys once at definition time.
     // These are always stripped — they are variant flags, not HTML attributes.
+    // A leading "!" negates the check (apply when falsy) but the underlying
+    // prop name still needs stripping, so drop the "!" here.
+    const propNameOf = (key: string) =>
+      key.startsWith("!") ? key.slice(1) : key;
+
     const customPropKeys = new Set(
       expressions
         .filter((e): e is ObjExpression => typeof e !== "function")
-        .flatMap((e) => Object.keys(e))
+        .flatMap((e) => Object.keys(e).map(propNameOf))
     );
 
     const shouldForward = (key: string): boolean => {
@@ -82,9 +87,10 @@ export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
           } else {
             return Object.keys(expression)
               .reduce((acc: any, key: any) => {
-                return Boolean((props as any)[key])
-                  ? [...acc, expression[key]]
-                  : acc;
+                const negated = key.startsWith("!");
+                const value = (props as any)[negated ? key.slice(1) : key];
+                const matches = negated ? !value : Boolean(value);
+                return matches ? [...acc, expression[key]] : acc;
               }, [])
               .join(" ");
           }
