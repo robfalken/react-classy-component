@@ -101,13 +101,11 @@ export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
           {}
         );
 
-        return isVoid ? (
-          <Tag ref={ref} className={classes} {...forwardedProps} />
-        ) : (
-          <Tag ref={ref} className={classes} {...forwardedProps}>
-            {children}
-          </Tag>
-        );
+        // Use createElement directly to avoid TypeScript's JSX ref checks
+        // on the dynamic `Tag` — the JSX would compile to this anyway.
+        return isVoid
+          ? React.createElement(Tag, { ref, className: classes, ...forwardedProps })
+          : React.createElement(Tag, { ref, className: classes, ...forwardedProps }, children);
       }
     );
 
