@@ -36,10 +36,19 @@ type HtmlTag = any;
 const sanitizeString = (str: string) => str.trim();
 const removeEmptyStrings = (str: string) => !!str;
 
+// https://developer.mozilla.org/en-US/docs/Glossary/Void_element
+const VOID_TAGS = new Set([
+  "area", "base", "br", "col", "embed", "hr", "img", "input",
+  "link", "meta", "param", "source", "track", "wbr",
+]);
+
 export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
   Tag: HtmlTag,
   options?: RccOptions
 ): Args<T, Ref> {
+  // Computed once per rcc(Tag) call — Tag never changes after creation.
+  const isVoid = typeof Tag === "string" && VOID_TAGS.has(Tag.toLowerCase());
+
   return function l2({ raw }, ...expressions: Expression[]) {
     // Collect object-expression keys once at definition time.
     // These are always stripped — they are variant flags, not HTML attributes.
@@ -82,7 +91,9 @@ export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
           {}
         );
 
-        return (
+        return isVoid ? (
+          <Tag ref={ref} className={classes} {...forwardedProps} />
+        ) : (
           <Tag ref={ref} className={classes} {...forwardedProps}>
             {children}
           </Tag>

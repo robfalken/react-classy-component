@@ -130,6 +130,31 @@ describe("rcc", () => {
     });
   });
 
+  describe("void elements", () => {
+    it("renders img without children", () => {
+      const Img = rcc.img`my-class`;
+      const { container } = render(<Img src="photo.jpg" alt="A photo" />);
+      expect(container.firstChild).toHaveClass("my-class");
+      expect(container.firstChild).toHaveAttribute("src", "photo.jpg");
+    });
+
+    it("renders input without children", () => {
+      const Input = rcc.input`my-class`;
+      const { container } = render(<Input type="email" placeholder="Email" />);
+      expect(container.firstChild).toHaveClass("my-class");
+      expect(container.firstChild).toHaveAttribute("type", "email");
+    });
+
+    it("silently ignores children passed to void elements", () => {
+      const Input = rcc.input``;
+      // Use createElement to bypass TS's JSX void-element child check
+      const { container } = render(
+        React.createElement(Input, { placeholder: "test" }, "should be ignored")
+      );
+      expect(container.firstChild).not.toHaveTextContent("should be ignored");
+    });
+  });
+
   describe("ref forwarding", () => {
     it("forwards ref to the underlying DOM element", () => {
       const Span = rcc("span")``;
