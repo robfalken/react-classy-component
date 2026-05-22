@@ -289,6 +289,57 @@ describe("rcc", () => {
     });
   });
 
+  describe("className", () => {
+    it("returns the base classes when called with no props", () => {
+      const generate = rcc.className`base-class other-class`;
+      expect(generate()).toBe("base-class other-class");
+    });
+
+    it("applies classes from an object expression when the prop is truthy", () => {
+      const generate = rcc.className<{ destructive: boolean }>`
+        base-class ${{ destructive: "bg-red-500" }}
+      `;
+      expect(generate({ destructive: true })).toBe("base-class bg-red-500");
+      expect(generate({ destructive: false })).toBe("base-class");
+    });
+
+    it("supports negated object-expression keys", () => {
+      const generate = rcc.className<{ negative?: boolean }>`
+        base ${{ "!negative": "not-negative" }}
+      `;
+      expect(generate()).toBe("base not-negative");
+      expect(generate({ negative: true })).toBe("base");
+    });
+
+    it("supports function expressions", () => {
+      const generate = rcc.className<{ variant?: "primary" | "secondary" }>`
+        base ${({ variant }) => (variant === "primary" ? "p" : "s")}
+      `;
+      expect(generate({ variant: "primary" })).toBe("base p");
+      expect(generate({ variant: "secondary" })).toBe("base s");
+    });
+
+    it("merges an extra className argument at the end", () => {
+      const generate = rcc.className<{ destructive: boolean }>`
+        base ${{ destructive: "bg-red-500" }}
+      `;
+      expect(generate({ destructive: true }, "user-class")).toBe(
+        "base bg-red-500 user-class"
+      );
+    });
+
+    it("works inline in a JSX className prop", () => {
+      const generate = rcc.className<{ destructive: boolean }>`
+        base ${{ destructive: "bg-red-500" }}
+      `;
+      const { container } = render(
+        <div className={generate({ destructive: true })} />
+      );
+      expect(container.firstChild).toHaveClass("base");
+      expect(container.firstChild).toHaveClass("bg-red-500");
+    });
+  });
+
   describe("as", () => {
     const Base = React.forwardRef<
       HTMLButtonElement,

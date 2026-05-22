@@ -109,6 +109,35 @@ Now `bg-blue-500` will only be rendered if the `primary` prop is truthy. And, yo
 <button class="text-white p-2 rounded bg-red-500">I am dangerous!</button>
 ```
 
+### Generating a className without a component
+
+Sometimes you want the same variant-driven class logic but don't want to wrap the element in a component (e.g. you're applying classes to a third-party component that takes a `className`, or you want to keep the JSX inline). Use `rcc.className` to build a generator from the same tagged-template syntax:
+
+```tsx
+const generateClassName = rcc.className<{ destructive: boolean }>`
+base-class ${{ destructive: "bg-red-500" }}
+`;
+
+<div className={generateClassName({ destructive: true })} />;
+```
+
+You can pass an extra string as a second argument to merge user-supplied classes:
+
+```tsx
+generateClassName({ destructive: true }, "m-5");
+// → "base-class bg-red-500 m-5"
+```
+
+Function expressions work too:
+
+```tsx
+const generateClassName = rcc.className<{ variant?: "primary" | "secondary" }>`
+text-white p-2 rounded
+${({ variant }) =>
+  variant === "primary" ? "bg-blue-500" : "bg-gray-500"}
+`;
+```
+
 ### Wrapping an existing component
 
 Use `rcc.as` to extend an existing component with extra classes. The wrapped component must accept a `className` prop (and forward refs to a DOM element if you want to use `ref`). The resulting component inherits the underlying component's prop types, so it can be used just like a native HTML element.

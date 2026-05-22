@@ -46,6 +46,43 @@ type HtmlTag = any;
 const sanitizeString = (str: string) => str.trim();
 const removeEmptyStrings = (str: string) => !!str;
 
+// A leading "!" negates the check (apply when falsy) but the underlying
+// prop name still needs stripping, so drop the "!" here.
+const propNameOf = (key: string) =>
+  key.startsWith("!") ? key.slice(1) : key;
+
+const evaluateExpression = (
+  expression: Expression,
+  props: Record<string, any>
+): string => {
+  if (typeof expression === "function") {
+    return expression(props);
+  }
+  return Object.keys(expression)
+    .reduce((acc: string[], key) => {
+      const negated = key.startsWith("!");
+      const value = props[negated ? key.slice(1) : key];
+      const matches = negated ? !value : Boolean(value);
+      return matches ? [...acc, expression[key]] : acc;
+    }, [])
+    .join(" ");
+};
+
+const buildClassName = (
+  raw: readonly string[],
+  expressions: Expression[],
+  props: Record<string, any>,
+  extra?: string
+): string =>
+  [
+    ...raw,
+    ...expressions.map((e) => evaluateExpression(e, props)),
+    extra ?? "",
+  ]
+    .map(sanitizeString)
+    .filter(removeEmptyStrings)
+    .join(" ");
+
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element
 const VOID_TAGS = new Set([
   "area", "base", "br", "col", "embed", "hr", "img", "input",
@@ -62,11 +99,6 @@ export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
   return function l2({ raw }, ...expressions: Expression[]) {
     // Collect object-expression keys once at definition time.
     // These are always stripped — they are variant flags, not HTML attributes.
-    // A leading "!" negates the check (apply when falsy) but the underlying
-    // prop name still needs stripping, so drop the "!" here.
-    const propNameOf = (key: string) =>
-      key.startsWith("!") ? key.slice(1) : key;
-
     const customPropKeys = new Set(
       expressions
         .filter((e): e is ObjExpression => typeof e !== "function")
@@ -81,25 +113,7 @@ export function rcc<T = React.HTMLProps<{}>, Ref extends Element = Element>(
 
     const component = forwardRef<Ref, React.HTMLProps<{}>>(
       ({ children, className = "", ...props }, ref) => {
-        const handleExpression = (expression: Expression) => {
-          if (typeof expression === "function") {
-            return expression(props);
-          } else {
-            return Object.keys(expression)
-              .reduce((acc: any, key: any) => {
-                const negated = key.startsWith("!");
-                const value = (props as any)[negated ? key.slice(1) : key];
-                const matches = negated ? !value : Boolean(value);
-                return matches ? [...acc, expression[key]] : acc;
-              }, [])
-              .join(" ");
-          }
-        };
-
-        const classes = [...raw, ...expressions.map(handleExpression), className]
-          .map(sanitizeString)
-          .filter(removeEmptyStrings)
-          .join(" ");
+        const classes = buildClassName(raw, expressions, props as Record<string, any>, className);
 
         const forwardedProps = Object.keys(props).reduce<Record<string, unknown>>(
           (acc, key) =>
@@ -286,6 +300,31 @@ rcc.section = function <T>(
     args,
     ...expressions
   );
+};
+
+/**
+ * Build a className generator from the same tagged-template syntax used for
+ * components. The returned function takes the variant props (and an optional
+ * `className` to merge) and returns the computed class string.
+ *
+ * @example
+ * const generateClassName = rcc.className<{ destructive: boolean }>`
+ *   base-class ${{ destructive: "bg-red-500" }}
+ * `;
+ *
+ * <div className={generateClassName({ destructive: true })} />
+ */
+rcc.className = function <T = {}>(
+  args: { raw: readonly string[] },
+  ...expressions: Expression[]
+): (props?: T, className?: string) => string {
+  return (props, className) =>
+    buildClassName(
+      args.raw,
+      expressions,
+      (props ?? {}) as Record<string, any>,
+      className
+    );
 };
 
 /**
