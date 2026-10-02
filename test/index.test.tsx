@@ -24,6 +24,25 @@ describe("rcc", () => {
       expect(container.firstChild).toHaveClass("second-class");
     });
 
+    it("lets a user className override conflicting Tailwind classes", () => {
+      const Div = rcc.div`p-2 bg-blue-500 text-white`;
+      const { container } = render(<Div className="p-4 bg-red-500" />);
+      expect((container.firstChild as HTMLElement).className).toBe(
+        "text-white p-4 bg-red-500"
+      );
+    });
+
+    it("lets variants override conflicting base classes", () => {
+      const Button = rcc.button<{ large?: boolean }>`
+        px-2 py-1 text-sm
+        ${{ large: "px-4 text-lg" }}
+      `;
+      const { container } = render(<Button large />);
+      expect((container.firstChild as HTMLElement).className).toBe(
+        "py-1 px-4 text-lg"
+      );
+    });
+
     it("adds conditional class from function expression", () => {
       const Span = rcc<{ yes: boolean } & React.HTMLAttributes<HTMLElement>>(
         "span"
@@ -326,6 +345,14 @@ describe("rcc", () => {
       expect(generate({ destructive: true }, "user-class")).toBe(
         "base bg-red-500 user-class"
       );
+    });
+
+    it("resolves conflicting Tailwind classes, last one wins", () => {
+      const generate = rcc.className<{ destructive: boolean }>`
+        p-2 bg-blue-500 ${{ destructive: "bg-red-500" }}
+      `;
+      expect(generate({ destructive: true })).toBe("p-2 bg-red-500");
+      expect(generate({ destructive: true }, "p-4")).toBe("bg-red-500 p-4");
     });
 
     it("works inline in a JSX className prop", () => {
