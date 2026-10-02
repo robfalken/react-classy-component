@@ -1,4 +1,5 @@
 import React, { forwardRef } from "react";
+import { twMerge } from "tailwind-merge";
 
 type FnExpression = (...args: any[]) => string;
 type ObjExpression = { [key: string]: string };
@@ -43,9 +44,6 @@ type Args<T, Ref extends Element = Element> = (
 
 type HtmlTag = any;
 
-const sanitizeString = (str: string) => str.trim();
-const removeEmptyStrings = (str: string) => !!str;
-
 // A leading "!" negates the check (apply when falsy) but the underlying
 // prop name still needs stripping, so drop the "!" here.
 const propNameOf = (key: string) =>
@@ -68,20 +66,19 @@ const evaluateExpression = (
     .join(" ");
 };
 
+// Later classes win over earlier conflicting ones (e.g. "p-2" + "p-4" → "p-4"),
+// so variants override the base and a user-supplied className overrides both.
 const buildClassName = (
   raw: readonly string[],
   expressions: Expression[],
   props: Record<string, any>,
   extra?: string
 ): string =>
-  [
+  twMerge(
     ...raw,
     ...expressions.map((e) => evaluateExpression(e, props)),
-    extra ?? "",
-  ]
-    .map(sanitizeString)
-    .filter(removeEmptyStrings)
-    .join(" ");
+    extra
+  );
 
 // https://developer.mozilla.org/en-US/docs/Glossary/Void_element
 const VOID_TAGS = new Set([

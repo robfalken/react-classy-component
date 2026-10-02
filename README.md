@@ -53,6 +53,22 @@ Will render 👇
 #### Preview
 <img width="108" alt="rendered" src="https://user-images.githubusercontent.com/261929/131214272-4b8cb9e1-d6aa-432f-85c0-d8e55fb0dfcf.png">
 
+### Class merging
+
+Classes are merged with [tailwind-merge](https://github.com/dcastil/tailwind-merge), so conflicting Tailwind classes are resolved instead of piling up. Later classes win: variant classes override the base classes, and a `className` prop overrides both.
+
+```tsx
+const Button = rcc.button`bg-blue-500 text-white p-2 rounded`;
+
+<Button className="p-4 bg-red-500">Click me!</Button>
+```
+
+Will render 👇
+
+```html
+<button class="text-white rounded p-4 bg-red-500">Click me!</button>
+```
+
 ### Refs
 
 Refs are forwarded to the underlying DOM element. Shortcut components (e.g. `rcc.button`) are typed with the correct element type:
@@ -126,6 +142,9 @@ You can pass an extra string as a second argument to merge user-supplied classes
 ```tsx
 generateClassName({ destructive: true }, "m-5");
 // → "base-class bg-red-500 m-5"
+
+generateClassName({ destructive: true }, "bg-green-500");
+// → "base-class bg-green-500"
 ```
 
 Function expressions work too:
