@@ -342,8 +342,8 @@ rcc.as = function <C extends React.ElementType>(
     args: { raw: readonly string[] },
     ...expressions: Expression[]
   ) {
-    type Ref = React.ElementRef<C> extends Element
-      ? React.ElementRef<C>
+    type Ref = React.ComponentRef<C> extends Element
+      ? React.ComponentRef<C>
       : Element;
     return rcc<React.ComponentPropsWithoutRef<C> & T, Ref>(
       Component as HtmlTag,
